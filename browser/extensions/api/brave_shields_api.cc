@@ -90,7 +90,7 @@ std::unique_ptr<base::ListValue> BraveShieldsUrlCosmeticResourcesFunction::
   // }
 
   auto result_list = std::make_unique<base::ListValue>();
-  //result_list->Append(std::move(*resources));
+  // result_list->Append(std::move(*resources));
   return result_list;
 }
 

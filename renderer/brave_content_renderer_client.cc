@@ -22,7 +22,7 @@ SetRuntimeFeaturesDefaultsBeforeBlinkInitialization() {
 BraveContentRendererClient::~BraveContentRendererClient() = default;
 
 void BraveContentRendererClient::RenderFrameCreated(
-	content::RenderFrame* render_frame) {
+    content::RenderFrame* render_frame) {
   ChromeContentRendererClient::RenderFrameCreated(render_frame);
 
   new cosmetic_filters_worker::CosmeticFiltersJsRenderFrameObserver(
