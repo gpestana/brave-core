@@ -3,11 +3,17 @@
  * License, v. 3.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+<<<<<<< HEAD
 #ifndef BRAVE_BROWSER_BRAVE_COSMETIC_RESOURCES_TAB_HELPER_H_
 #define BRAVE_BROWSER_BRAVE_COSMETIC_RESOURCES_TAB_HELPER_H_
 
 #include <memory>
 #include <string>
+=======
+#ifndef BRAVE_BROWSER_ANDROID_BRAVE_COSMETIC_RESOURCES_TAB_HELPER_H_
+#define BRAVE_BROWSER_ANDROID_BRAVE_COSMETIC_RESOURCES_TAB_HELPER_H_
+
+>>>>>>> enable cf on desktop/disable extension
 #include <vector>
 
 #include "base/memory/weak_ptr.h"
@@ -21,8 +27,11 @@ class BraveCosmeticResourcesTabHelper
       public content::WebContentsUserData<BraveCosmeticResourcesTabHelper>,
       public base::SupportsWeakPtr<BraveCosmeticResourcesTabHelper> {
  public:
+<<<<<<< HEAD
   static std::string* observing_script_;
 
+=======
+>>>>>>> enable cf on desktop/disable extension
   explicit BraveCosmeticResourcesTabHelper(content::WebContents* contents);
   ~BraveCosmeticResourcesTabHelper() override;
 
@@ -52,12 +61,20 @@ class BraveCosmeticResourcesTabHelper
 
   std::unique_ptr<base::ListValue> GetUrlCosmeticResourcesOnTaskRunner(
       const std::string& url);
+<<<<<<< HEAD
   void GetUrlCosmeticResourcesOnUI(content::GlobalFrameRoutingId frame_id,
+=======
+  void GetUrlCosmeticResourcesOnUI(content::RenderFrameHost* render_frame_host,
+>>>>>>> enable cf on desktop/disable extension
       const std::string& url, bool main_frame,
       std::unique_ptr<base::ListValue> resources);
   void CSSRulesRoutine(const std::string& url,
       base::DictionaryValue* resources_dict,
+<<<<<<< HEAD
       content::GlobalFrameRoutingId frame_id);
+=======
+      content::RenderFrameHost* render_frame_host);
+>>>>>>> enable cf on desktop/disable extension
 
   std::unique_ptr<base::ListValue> GetHiddenClassIdSelectorsOnTaskRunner(
       const std::vector<std::string>& classes,
@@ -72,4 +89,8 @@ class BraveCosmeticResourcesTabHelper
   DISALLOW_COPY_AND_ASSIGN(BraveCosmeticResourcesTabHelper);
 };
 
+<<<<<<< HEAD
 #endif  // BRAVE_BROWSER_BRAVE_COSMETIC_RESOURCES_TAB_HELPER_H_
+=======
+#endif  // BRAVE_BROWSER_ANDROID_BRAVE_COSMETIC_RESOURCES_TAB_HELPER_H_
+>>>>>>> enable cf on desktop/disable extension
