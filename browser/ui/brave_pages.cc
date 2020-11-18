@@ -45,8 +45,7 @@ void ShowWebcompatReporter(Browser* browser) {
 
 void ShowBraveWallet(Browser* browser) {
   ShowSingletonTabOverwritingNTP(
-      browser,
-      GetSingletonTabNavigateParams(browser, GURL(kBraveUIWalletURL)));
+      browser, GetSingletonTabNavigateParams(browser, GURL(kBraveUIWalletURL)));
 }
 
 void ShowExtensionSettings(Browser* browser) {

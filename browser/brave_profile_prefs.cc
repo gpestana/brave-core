@@ -28,6 +28,7 @@
 #include "brave/components/l10n/browser/locale_helper.h"
 #include "brave/components/l10n/common/locale_util.h"
 #include "brave/components/moonpay/browser/buildflags/buildflags.h"
+#include "brave/components/playlist/buildflags/buildflags.h"
 #include "brave/components/search_engines/brave_prepopulated_engines.h"
 #include "brave/components/speedreader/buildflags.h"
 #include "brave/components/tor/buildflags/buildflags.h"
@@ -103,6 +104,10 @@
 #include "components/feed/core/shared_prefs/pref_names.h"
 #include "components/ntp_tiles/pref_names.h"
 #include "components/translate/core/browser/translate_pref_names.h"
+#endif
+
+#if BUILDFLAG(ENABLE_PLAYLIST)
+#include "brave/components/playlist/pref_names.h"
 #endif
 
 using extensions::FeatureSwitch;
@@ -345,6 +350,10 @@ void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry) {
   // We can turn customization mode on when we have add-shortcut feature.
   registry->SetDefaultPrefValue(prefs::kNtpUseMostVisitedTiles,
                                 base::Value(true));
+#endif
+
+#if BUILDFLAG(ENABLE_PLAYLIST)
+  registry->RegisterDictionaryPref(playlist::kPlaylistItems);
 #endif
 
   RegisterProfilePrefsForMigration(registry);

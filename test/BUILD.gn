@@ -644,6 +644,7 @@ if (!is_android) {
     }
 
     deps = [
+      "//brave/browser/playlist/test:browser_tests",
       "//brave/browser/tor:browser_tests",
       "//brave/chromium_src/third_party/blink/renderer/modules:browser_tests",
       "//brave/components/ipfs/test:brave_ipfs_browser_tests",
