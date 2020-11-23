@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "components/content_settings/core/browser/content_settings_ephemeral_provider.h"
+#include "components/content_settings/core/common/content_settings_types.h"
 
 namespace content_settings {
 
@@ -24,7 +25,6 @@ class BraveEphemeralProvider : public EphemeralProvider {
       const ContentSettingsPattern& primary_pattern,
       const ContentSettingsPattern& secondary_pattern,
       ContentSettingsType content_type,
-      const ResourceIdentifier& resource_identifier,
       std::unique_ptr<base::Value>&& value,
       const ContentSettingConstraints& constraints = {}) override;
 

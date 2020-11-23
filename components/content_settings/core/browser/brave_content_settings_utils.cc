@@ -8,21 +8,24 @@
 #include <algorithm>
 
 #include "base/optional.h"
-#include "brave/components/brave_shields/common/brave_shield_constants.h"
 #include "url/gurl.h"
 
 namespace {
 
-const std::vector<std::string> kShieldsResourceIDs {
-    brave_shields::kAds,
-    brave_shields::kTrackers,
-    brave_shields::kCosmeticFiltering,
-    brave_shields::kHTTPUpgradableResources,
-    brave_shields::kJavaScript,
-    brave_shields::kFingerprintingV2,
-    brave_shields::kBraveShields,
-    brave_shields::kReferrers,
-    brave_shields::kCookies };
+const std::vector<ContentSettingsType> kShieldsContentSettingsTypes {
+    ContentSettingsType::BRAVE_ADS,
+    ContentSettingsType::BRAVE_COSMETIC_FILTERING,
+    ContentSettingsType::BRAVE_TRACKERS,
+    ContentSettingsType::BRAVE_HTTP_UPGRADABLE_RESOURCES,
+    ContentSettingsType::BRAVE_JAVASCRIPT,
+    ContentSettingsType::BRAVE_FINGERPRINTING_V2,
+    ContentSettingsType::BRAVE_SHIELDS,
+    ContentSettingsType::BRAVE_REFERRERS,
+    ContentSettingsType::BRAVE_COOKIES,
+    ContentSettingsType::BRAVE_FACEBOOK_EMBEDS,
+    ContentSettingsType::BRAVE_TWITTER_EMBEDS,
+    ContentSettingsType::BRAVE_LINKEDIN_EMBEDS
+};
 
 bool CanPatternBeConvertedToWildcardSchemeAndPort(
     const ContentSettingsPattern& pattern) {
@@ -54,15 +57,15 @@ bool CanPatternBeConvertedToWildcardSchemeAndPort(
 
 namespace content_settings {
 
-const std::vector<std::string>& GetShieldsResourceIDs() {
-  return kShieldsResourceIDs;
+const std::vector<ContentSettingsType>& GetShieldsContentSettingsTypes() {
+  return kShieldsContentSettingsTypes;
 }
 
-bool IsShieldsResourceID(
-    const content_settings::ResourceIdentifier& resource_identifier) {
-  return std::find(kShieldsResourceIDs.begin(),
-                   kShieldsResourceIDs.end(),
-                   resource_identifier) != kShieldsResourceIDs.end();
+bool IsShieldsContentSettingsType(
+    const ContentSettingsType& content_type) {
+  return std::find(kShieldsContentSettingsTypes.begin(),
+                   kShieldsContentSettingsTypes.end(),
+                   content_type) != kShieldsContentSettingsTypes.end();
 }
 
 base::Optional<ContentSettingsPattern> ConvertPatternToWildcardSchemeAndPort(
