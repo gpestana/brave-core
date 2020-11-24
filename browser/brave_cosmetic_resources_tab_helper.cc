@@ -277,7 +277,7 @@ std::unique_ptr<base::ListValue>
 }
 
 void BraveCosmeticResourcesTabHelper::GetHiddenClassIdSelectorsOnUI(
-    content::RenderFrameHost* render_frame_host,
+    content::GlobalFrameRoutingId frame_id,
     std::unique_ptr<base::ListValue> selectors) {
   if (!selectors) {
     return;
@@ -313,7 +313,10 @@ void BraveCosmeticResourcesTabHelper::GetHiddenClassIdSelectorsOnUI(
               "document.adoptedStyleSheets = [window.cosmeticStyleSheet];"
           "};";
       cosmeticFilterConsiderNewSelectors_script += "})();";
-      render_frame_host->ExecuteJavaScriptInIsolatedWorld(
+      auto* frame_host = content::RenderFrameHost::FromID(frame_id);
+      if (!frame_host)
+        return;
+      frame_host->ExecuteJavaScriptInIsolatedWorld(
           base::UTF8ToUTF16(cosmeticFilterConsiderNewSelectors_script),
           base::NullCallback(), ISOLATED_WORLD_ID_CHROME_INTERNAL);
     }
@@ -384,7 +387,9 @@ void BraveCosmeticResourcesTabHelper::HiddenClassIdSelectors(
             classes, ids),
           base::BindOnce(&BraveCosmeticResourcesTabHelper::
             GetHiddenClassIdSelectorsOnUI, base::Unretained(this),
-            render_frame_host));
+            content::GlobalFrameRoutingId(
+                  render_frame_host->GetProcess()->GetID(),
+                  render_frame_host->GetRoutingID())));
 }
 
 WEB_CONTENTS_USER_DATA_KEY_IMPL(BraveCosmeticResourcesTabHelper)
