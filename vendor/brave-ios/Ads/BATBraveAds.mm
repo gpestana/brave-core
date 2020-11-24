@@ -5,6 +5,7 @@
 #include <limits>
 
 #import "BATBraveAds.h"
+#import "BATBraveAds+Private.h"
 #import "BATAdNotification.h"
 #import "BATBraveLedger.h"
 
@@ -227,16 +228,30 @@ BATClassAdsBridge(BOOL, isDebug, setDebug, _is_debug)
   adsDatabase = new ads::Database(base::FilePath(dbPath.UTF8String));
 }
 
-- (void)shutdown
+- (void)shutdown:(nullable void (^)())completion
 {
   if ([self isAdsServiceRunning]) {
     ads->Shutdown(^(bool) {
-      delete ads;
-      delete adsClient;
-      delete adsDatabase;
+      if (ads != nil) {
+        delete ads;
+      }
+      if (adsClient != nil) {
+        delete adsClient;
+      }
+      if (adsDatabase != nil) {
+        delete adsDatabase;
+      }
       ads = nil;
       adsClient = nil;
+      adsDatabase = nil;
+      if (completion) {
+        completion();
+      }
     });
+  } else {
+    if (completion) {
+      completion();
+    }
   }
 }
 
@@ -259,8 +274,6 @@ BATClassAdsBridge(BOOL, isDebug, setDebug, _is_debug)
 
   if (enabled) {
     [self initializeIfAdsEnabled];
-  } else {
-    [self shutdown];
   }
 }
 
@@ -587,13 +600,15 @@ BATClassAdsBridge(BOOL, isDebug, setDebug, _is_debug)
 
   const auto copiedURL = [NSString stringWithUTF8String:url_request->url.c_str()];
 
+  const auto __weak weakSelf = self;
   return [self.commonOps loadURLRequest:url_request->url headers:url_request->headers content:url_request->content content_type:url_request->content_type method:methodMap[url_request->method] callback:^(const std::string& errorDescription, int statusCode, const std::string &response, const base::flat_map<std::string, std::string> &headers) {
+    const auto strongSelf = weakSelf;
+    if (!strongSelf || ![strongSelf isAdsServiceRunning]) { return; }
     ads::UrlResponse url_response;
     url_response.url = copiedURL.UTF8String;
     url_response.status_code = statusCode;
     url_response.body = response;
     url_response.headers = headers;
-
     callback(url_response);
   }];
 }
@@ -733,7 +748,7 @@ BATClassAdsBridge(BOOL, isDebug, setDebug, _is_debug)
   NSString *manifestUrl = [baseUrl stringByAppendingPathComponent:@"models.json"];
   return [self.commonOps loadURLRequest:manifestUrl.UTF8String headers:{} content:"" content_type:"" method:"GET" callback:^(const std::string& errorDescription, int statusCode, const std::string &response, const base::flat_map<std::string, std::string> &headers) {
     const auto strongSelf = weakSelf;
-    if (!strongSelf) { return; }
+    if (!strongSelf || ![strongSelf isAdsServiceRunning]) { return; }
 
     if (statusCode == 404) {
       BLOG(1, @"%@ user model manifest not found", id);
@@ -793,7 +808,7 @@ BATClassAdsBridge(BOOL, isDebug, setDebug, _is_debug)
 
       return [strongSelf.commonOps loadURLRequest:modelUrl.UTF8String headers:{} content:"" content_type:"" method:"GET" callback:^(const std::string& errorDescription, int statusCode, const std::string &response, const base::flat_map<std::string, std::string> &headers) {
         const auto strongSelf = weakSelf;
-        if (!strongSelf) { return; }
+        if (!strongSelf || ![strongSelf isAdsServiceRunning]) { return; }
 
         if (statusCode == 404) {
           BLOG(1, @"%@ user model not found", id);
@@ -840,7 +855,7 @@ BATClassAdsBridge(BOOL, isDebug, setDebug, _is_debug)
   const auto __weak weakSelf = self;
   [self downloadUserModelForId:bridgedId completion:^(BOOL success, BOOL shouldRetry) {
     const auto strongSelf = weakSelf;
-    if (!strongSelf) { return; }
+    if (!strongSelf || ![strongSelf isAdsServiceRunning]) { return; }
 
     const auto contents = [strongSelf.commonOps loadContentsFromFileWithName:bridgedId.UTF8String];
     if (!success || contents.empty()) {
@@ -859,7 +874,9 @@ BATClassAdsBridge(BOOL, isDebug, setDebug, _is_debug)
         BLOG(1, @"Retry loading %@ user model on %@", bridgedId, [formatter stringFromDate:[[NSDate date] dateByAddingTimeInterval:delay]]);
 
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-          [strongSelf loadUserModelForId:bridgedId.UTF8String callback:callback];
+          const auto strongSelf2 = weakSelf;
+          if (!strongSelf2 || ![strongSelf2 isAdsServiceRunning]) { return; }
+          [strongSelf2 loadUserModelForId:bridgedId.UTF8String callback:callback];
         });
       }
 
@@ -987,11 +1004,14 @@ BATClassAdsBridge(BOOL, isDebug, setDebug, _is_debug)
     response->status = ads::DBCommandResponse::Status::RESPONSE_ERROR;
     callback(std::move(response));
   } else {
+    __weak BATBraveAds* weakSelf = self;
     __block auto transactionClone = transaction->Clone();
     dispatch_async(self.databaseQueue, ^{
       __block auto response = ads::DBCommandResponse::New();
       adsDatabase->RunTransaction(std::move(transactionClone), response.get());
       dispatch_async(dispatch_get_main_queue(), ^{
+        const auto strongSelf = weakSelf;
+        if (!strongSelf || ![strongSelf isAdsServiceRunning]) { return; }
         callback(std::move(response));
       });
     });
