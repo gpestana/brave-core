@@ -16,6 +16,9 @@
 #include "chrome/browser/profiles/profile_manager.h"
 #include "chrome/browser/profiles/profile_metrics.h"
 
+// FIXME: Needs to be adapted accordingly for the rebase
+#if 0
+
 namespace profiles {
 
 void CreateAndSwitchToNewProfile(ProfileManager::CreateCallback callback,
@@ -33,3 +36,5 @@ void CreateAndSwitchToNewProfile(ProfileManager::CreateCallback callback,
 }
 
 }  // namespace profiles
+
+#endif
