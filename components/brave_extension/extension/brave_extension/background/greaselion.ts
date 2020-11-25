@@ -58,6 +58,15 @@ interface OnUpdatedTabRegistration {
   registered: boolean
 }
 
+let onCompletedWebRequestBinding =
+  (details: chrome.webRequest.WebResponseCacheDetails) => {}
+
+let onSendHeadersWebRequestBinding =
+  (details: chrome.webRequest.WebRequestHeadersDetails) => {}
+
+let onUpdatedTabBinding =
+  (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {}
+
 // Maps webRequest.OnCompleted registrations by tabId:senderId
 const onCompletedWebRequestRegistrations =
   new Map<string, OnCompletedWebRequestRegistration>()
@@ -120,7 +129,27 @@ const handleMediaDurationMetadata = (tabId: number, mediaType: string, data: Med
   chrome.braveRewards.updateMediaDuration(tabId, publisherKey, data.duration, data.firstVisit)
 }
 
-const handleRegisterOnCompletedWebRequest = (registrationKey: string, mediaType: string, data: RegisterOnCompletedWebRequest) => {
+const onCompletedWebRequest = (
+  registrationKey: string,
+  mediaType: string,
+  details: chrome.webRequest.WebResponseCacheDetails
+) => {
+  const port = portsByTabIdSenderId.get(registrationKey)
+  if (!port) {
+    return
+  }
+  port.postMessage({
+    type: 'OnCompletedWebRequest',
+    mediaType,
+    details
+  })
+}
+
+const handleRegisterOnCompletedWebRequest = (
+  registrationKey: string,
+  mediaType: string,
+  data: RegisterOnCompletedWebRequest
+) => {
   const handler = onCompletedWebRequestRegistrations.get(registrationKey)
   if (handler && handler.registered) {
     return
@@ -129,19 +158,12 @@ const handleRegisterOnCompletedWebRequest = (registrationKey: string, mediaType:
   // Mark this tab as registered
   onCompletedWebRequestRegistrations.set(registrationKey, { registered: true })
 
+  // Create and install the listener
+  onCompletedWebRequestBinding =
+    onCompletedWebRequest.bind(null, registrationKey, mediaType)
   chrome.webRequest.onCompleted.addListener(
     // Listener
-    function (details) {
-      const port = portsByTabIdSenderId.get(registrationKey)
-      if (!port) {
-        return
-      }
-      port.postMessage({
-        type: 'OnCompletedWebRequest',
-        mediaType,
-        details
-      })
-    },
+    onCompletedWebRequestBinding,
     // Filters
     {
       types: [
@@ -154,6 +176,24 @@ const handleRegisterOnCompletedWebRequest = (registrationKey: string, mediaType:
     })
 }
 
+const onSendHeadersWebRequest = (
+  registrationKey: string,
+  mediaType: string,
+  details: chrome.webRequest.WebRequestHeadersDetails
+) => {
+  const port = portsByTabIdSenderId.get(registrationKey)
+  if (!port) {
+    return
+  }
+  port.postMessage({
+    type: 'OnSendHeadersWebRequest',
+    mediaType,
+    data: {
+      details
+    }
+  })
+}
+
 const handleRegisterOnSendHeadersWebRequest = (registrationKey: string, mediaType: string, data: RegisterOnSendHeadersWebRequest) => {
   // If we already registered a handler for this tab, exit early
   const handler = onSendHeadersWebRequestRegistrations.get(registrationKey)
@@ -164,21 +204,12 @@ const handleRegisterOnSendHeadersWebRequest = (registrationKey: string, mediaTyp
   // Mark this tab as registered
   onSendHeadersWebRequestRegistrations.set(registrationKey, { registered: true })
 
+  // Create and install the listener
+  onSendHeadersWebRequestBinding =
+    onSendHeadersWebRequest.bind(null, registrationKey, mediaType)
   chrome.webRequest.onSendHeaders.addListener(
     // Listener
-    function (details) {
-      const port = portsByTabIdSenderId.get(registrationKey)
-      if (!port) {
-        return
-      }
-      port.postMessage({
-        type: 'OnSendHeadersWebRequest',
-        mediaType,
-        data: {
-          details
-        }
-      })
-    },
+    onSendHeadersWebRequestBinding,
     // Filters
     {
       urls: data.urlPatterns
@@ -186,6 +217,28 @@ const handleRegisterOnSendHeadersWebRequest = (registrationKey: string, mediaTyp
     // Extra
     data.extra
   )
+}
+
+const onUpdatedTab = (
+  registrationKey: string,
+  mediaType: string,
+  tabId: number,
+  changeInfo: chrome.tabs.TabChangeInfo,
+  tab: chrome.tabs.Tab
+) => {
+  const port = portsByTabIdSenderId.get(registrationKey)
+  if (!port) {
+    return
+  }
+  port.postMessage({
+    type: 'OnUpdatedTab',
+    mediaType,
+    data: {
+      tabId,
+      changeInfo,
+      tab
+    }
+  })
 }
 
 const handleRegisterOnUpdatedTab = (registrationKey: string, mediaType: string) => {
@@ -198,23 +251,9 @@ const handleRegisterOnUpdatedTab = (registrationKey: string, mediaType: string) 
   // Mark this tab as registered
   onUpdatedTabRegistrations.set(registrationKey, { registered: true })
 
-  chrome.tabs.onUpdated.addListener(
-    // Listener
-    function (tabId, changeInfo, tab) {
-      const port = portsByTabIdSenderId.get(registrationKey)
-      if (!port) {
-        return
-      }
-      port.postMessage({
-        type: 'OnUpdatedTab',
-        mediaType,
-        data: {
-          tabId,
-          changeInfo,
-          tab
-        }
-      })
-    })
+  // Create and install the listener
+  onUpdatedTabBinding = onUpdatedTab.bind(null, registrationKey, mediaType)
+  chrome.tabs.onUpdated.addListener(onUpdatedTabBinding)
 }
 
 const getPublisherPanelInfo = (tabId: number, publisherKey: string) => {
@@ -309,51 +348,47 @@ const handleTipUser = (tabId: number, mediaType: string, data: TipUser) => {
     data.postText)
 }
 
-chrome.runtime.onConnectExternal.addListener((port: chrome.runtime.Port) => {
-  if (!port || port.name !== 'Greaselion') {
+const onMessageListener = (msg: any, port: chrome.runtime.Port) => {
+  if (!port || !port.sender || !port.sender.id || !port.sender.tab || !msg) {
     return
   }
 
-  port.onMessage.addListener((msg: any, port: chrome.runtime.Port) => {
-    if (!port.sender || !port.sender.id || !port.sender.tab || !msg) {
+  const tabId = port.sender.tab.id
+  if (!tabId) {
+    return
+  }
+
+  const senderId = port.sender.id
+  if (!senderId) {
+    return
+  }
+
+  const key = buildTabIdSenderIdKey(tabId, senderId)
+  if (!portsByTabIdSenderId.get(key)) {
+    portsByTabIdSenderId.set(key, port)
+  }
+
+  chrome.greaselion.isGreaselionExtension(port.sender.id, (valid: boolean) => {
+    if (!valid) {
       return
     }
-
-    const tabId = port.sender.tab.id
-    if (!tabId) {
-      return
-    }
-
-    const senderId = port.sender.id
-    if (!senderId) {
-      return
-    }
-
-    const key = buildTabIdSenderIdKey(tabId, senderId)
-    if (!portsByTabIdSenderId.get(key)) {
-      portsByTabIdSenderId.set(key, port)
-    }
-
-    chrome.greaselion.isGreaselionExtension(port.sender.id, (valid: boolean) => {
-      if (!valid) {
-        return
+    switch (msg.type) {
+      case 'GreaselionError': {
+        const data = msg.data as GreaselionError
+        handleGreaselionError(tabId, msg.mediaType, data)
+        break
       }
-      switch (msg.type) {
-        case 'GreaselionError': {
-          const data = msg.data as GreaselionError
-          handleGreaselionError(tabId, msg.mediaType, data)
-          break
-        }
-        case 'MediaDurationMetadata': {
-          const data = msg.data as MediaDurationMetadata
-          handleMediaDurationMetadata(tabId, msg.mediaType, data)
-          break
-        }
-        case 'OnAPIRequest': {
-          const data = msg.data as OnAPIRequest
-          handleOnAPIRequest(
-            data,
-            (response: any) => {
+      case 'MediaDurationMetadata': {
+        const data = msg.data as MediaDurationMetadata
+        handleMediaDurationMetadata(tabId, msg.mediaType, data)
+        break
+      }
+      case 'OnAPIRequest': {
+        const data = msg.data as OnAPIRequest
+        handleOnAPIRequest(
+          data,
+          (response: any) => {
+            if (portsByTabIdSenderId.has(key)) {
               port.postMessage({
                 type: 'OnAPIResponse',
                 mediaType: msg.mediaType,
@@ -362,8 +397,10 @@ chrome.runtime.onConnectExternal.addListener((port: chrome.runtime.Port) => {
                   response
                 }
               })
-            },
-            (error: any) => {
+            }
+          },
+          (error: any) => {
+            if (portsByTabIdSenderId.has(key)) {
               port.postMessage({
                 type: 'OnAPIResponse',
                 mediaType: msg.mediaType,
@@ -372,49 +409,66 @@ chrome.runtime.onConnectExternal.addListener((port: chrome.runtime.Port) => {
                   error
                 }
               })
-            })
-          break
-        }
-        case 'RegisterOnCompletedWebRequest': {
-          const data = msg.data as RegisterOnCompletedWebRequest
-          handleRegisterOnCompletedWebRequest(key, msg.mediaType, data)
-          break
-        }
-        case 'RegisterOnSendHeadersWebRequest': {
-          const data = msg.data as RegisterOnSendHeadersWebRequest
-          handleRegisterOnSendHeadersWebRequest(key, msg.mediaType, data)
-          break
-        }
-        case 'RegisterOnUpdatedTab': {
-          handleRegisterOnUpdatedTab(key, msg.mediaType)
-          break
-        }
-        case 'SavePublisherVisit': {
-          const data = msg.data as SavePublisherVisit
-          handleSavePublisherVisit(tabId, msg.mediaType, data)
-          break
-        }
-        case 'TipUser': {
-          const data = msg.data as TipUser
-          handleTipUser(tabId, msg.mediaType, data)
-          break
-        }
+            }
+          })
+        break
       }
-    })
+      case 'RegisterOnCompletedWebRequest': {
+        const data = msg.data as RegisterOnCompletedWebRequest
+        handleRegisterOnCompletedWebRequest(key, msg.mediaType, data)
+        break
+      }
+      case 'RegisterOnSendHeadersWebRequest': {
+        const data = msg.data as RegisterOnSendHeadersWebRequest
+        handleRegisterOnSendHeadersWebRequest(key, msg.mediaType, data)
+        break
+      }
+      case 'RegisterOnUpdatedTab': {
+        handleRegisterOnUpdatedTab(key, msg.mediaType)
+        break
+      }
+      case 'SavePublisherVisit': {
+        const data = msg.data as SavePublisherVisit
+        handleSavePublisherVisit(tabId, msg.mediaType, data)
+        break
+      }
+      case 'TipUser': {
+        const data = msg.data as TipUser
+        handleTipUser(tabId, msg.mediaType, data)
+        break
+      }
+    }
   })
+}
+
+chrome.runtime.onConnectExternal.addListener((port: chrome.runtime.Port) => {
+  if (!port || port.name !== 'Greaselion') {
+    return
+  }
+
+  port.onMessage.addListener(onMessageListener)
 
   port.onDisconnect.addListener((port: chrome.runtime.Port) => {
     if (chrome.runtime.lastError) {
       console.error(`Greaselion port disconnected due to error: ${chrome.runtime.lastError}`)
     }
     if (port.sender && port.sender.id && port.sender.tab && port.sender.tab.id) {
+      port.onMessage.removeListener(onMessageListener)
+
       publisherKeysByTabId.delete(port.sender.tab.id)
 
       const key = buildTabIdSenderIdKey(port.sender.tab.id, port.sender.id)
+
       portsByTabIdSenderId.delete(key)
+
       onCompletedWebRequestRegistrations.delete(key)
+      chrome.webRequest.onCompleted.removeListener(onCompletedWebRequestBinding)
+
       onSendHeadersWebRequestRegistrations.delete(key)
+      chrome.webRequest.onSendHeaders.removeListener(onSendHeadersWebRequestBinding)
+
       onUpdatedTabRegistrations.delete(key)
+      chrome.tabs.onUpdated.removeListener(onUpdatedTabBinding)
     }
   })
 })
