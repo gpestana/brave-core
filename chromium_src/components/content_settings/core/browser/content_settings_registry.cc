@@ -46,9 +46,8 @@ const struct {
 
 void ContentSettingsRegistry::RegisterBraveContentSettingsTypes(
     const ContentSettingsType& type, const std::string& name) {
-  Register(type, name, CONTENT_SETTING_BLOCK,
-           WebsiteSettingsInfo::SYNCABLE,
-           AllowlistedSchemes(kChromeUIScheme, kChromeDevToolsScheme),
+  Register(type, name, CONTENT_SETTING_ALLOW,
+           WebsiteSettingsInfo::UNSYNCABLE, AllowlistedSchemes(),
            ValidSettings(CONTENT_SETTING_ALLOW, CONTENT_SETTING_BLOCK,
                          CONTENT_SETTING_ASK,
                          CONTENT_SETTING_DETECT_IMPORTANT_CONTENT),
@@ -56,7 +55,7 @@ void ContentSettingsRegistry::RegisterBraveContentSettingsTypes(
            WebsiteSettingsRegistry::DESKTOP |
                WebsiteSettingsRegistry::PLATFORM_ANDROID,
            ContentSettingsInfo::INHERIT_IN_INCOGNITO,
-           ContentSettingsInfo::EPHEMERAL,
+           ContentSettingsInfo::PERSISTENT,
            ContentSettingsInfo::EXCEPTIONS_ON_SECURE_AND_INSECURE_ORIGINS);
 }
 
