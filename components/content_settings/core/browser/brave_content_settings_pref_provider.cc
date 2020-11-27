@@ -116,30 +116,14 @@ BravePrefProvider::BravePrefProvider(PrefService* prefs,
     : PrefProvider(prefs, off_the_record, store_last_modified, restore_session),
       initialized_(false),
       weak_factory_(this) {
-  brave_pref_change_registrar_.Init(prefs_);
-  brave_pref_change_registrar_.Add(
+  pref_change_registrar_.Add(
       kGoogleLoginControlType,
       base::BindRepeating(&BravePrefProvider::OnCookiePrefsChanged,
                           base::Unretained(this)));
 
-  WebsiteSettingsRegistry* website_settings =
-      WebsiteSettingsRegistry::GetInstance();
-  // Makes BravePrefProvder handle plugin type.
-  for (const WebsiteSettingsInfo* info : *website_settings) {
-    if (info->type() == ContentSettingsType::PLUGINS) {
-      content_settings_prefs_.insert(std::make_pair(
-          info->type(),
-          std::make_unique<ContentSettingsPref>(
-              info->type(), prefs_, &brave_pref_change_registrar_,
-              info->pref_name(), off_the_record_, restore_session,
-              base::Bind(&PrefProvider::Notify, base::Unretained(this)))));
-      break;
-    }
-  }
-
   MigrateShieldsSettings(off_the_record);
 
-  OnCookieSettingsChanged(ContentSettingsType::PLUGINS);
+  OnCookieSettingsChanged(ContentSettingsType::BRAVE_COOKIES);
 
   // Enable change notifications after initial setup to avoid notification spam
   initialized_ = true;
@@ -150,7 +134,6 @@ BravePrefProvider::~BravePrefProvider() {}
 
 void BravePrefProvider::ShutdownOnUIThread() {
   RemoveObserver(this);
-  brave_pref_change_registrar_.RemoveAll();
   PrefProvider::ShutdownOnUIThread();
 }
 
@@ -176,7 +159,7 @@ void BravePrefProvider::MigrateShieldsSettingsV1ToV2() {
   if (prefs_->GetInteger(kBraveShieldsSettingsVersion) != 1)
     return;
 
-  // All sources in ContentSettingsType::PLUGINS we want to migrate.
+  // All sources in Brave-specific ContentSettingsType(s) we want to migrate.
   for (const auto& content_type : GetShieldsContentSettingsTypes())
     MigrateShieldsSettingsV1ToV2ForOneType(content_type);
 
@@ -421,7 +404,7 @@ void BravePrefProvider::UpdateCookieRules(ContentSettingsType content_type,
   }
 
   // Notify brave cookie changes as ContentSettingsType::COOKIES
-  if (initialized_ && content_type == ContentSettingsType::PLUGINS) {
+  if (initialized_ && content_type == ContentSettingsType::BRAVE_COOKIES) {
     // PostTask here to avoid content settings autolock DCHECK
     base::PostTask(
         FROM_HERE,
@@ -443,7 +426,7 @@ void BravePrefProvider::NotifyChanges(const std::vector<Rule>& rules,
 
 void BravePrefProvider::OnCookiePrefsChanged(
     const std::string& pref) {
-  OnCookieSettingsChanged(ContentSettingsType::PLUGINS);
+  OnCookieSettingsChanged(ContentSettingsType::BRAVE_COOKIES);
 }
 
 void BravePrefProvider::OnCookieSettingsChanged(

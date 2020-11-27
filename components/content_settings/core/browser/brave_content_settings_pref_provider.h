@@ -65,9 +65,6 @@ class BravePrefProvider : public PrefProvider,
                                ContentSettingsType content_type) override;
   void OnCookiePrefsChanged(const std::string& pref);
 
-  // PrefProvider::pref_change_registrar_ alreay has plugin type.
-  PrefChangeRegistrar brave_pref_change_registrar_;
-
   std::map<bool /* is_incognito */, std::vector<Rule>> cookie_rules_;
   std::map<bool /* is_incognito */, std::vector<Rule>> brave_cookie_rules_;
 
