@@ -92,6 +92,7 @@ storiesOf('New Tab/Containers', module)
         saveShowBitcoinDotCom={doNothing}
         saveShowCryptoDotCom={doNothing}
         saveBrandedWallpaperOptIn={doNothing}
+        saveSetAllStackWidgets={doNothing}
       />
     )
   })

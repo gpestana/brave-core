@@ -61,6 +61,7 @@ interface Props {
   saveShowBitcoinDotCom: (value: boolean) => void
   saveShowCryptoDotCom: (value: boolean) => void
   saveBrandedWallpaperOptIn: (value: boolean) => void
+  saveSetAllStackWidgets: (value: boolean) => void
 }
 
 interface State {
@@ -738,12 +739,52 @@ class NewTabPage extends React.Component<Props, State> {
   }
 
   toggleAllCards = (show: boolean) => {
-    this.props.saveShowTogether(show)
-    this.props.saveShowRewards(show)
-    this.props.saveShowBinance(show)
-    this.props.saveShowGemini(show)
-    this.props.saveShowCryptoDotCom(show)
-    this.props.saveShowBitcoinDotCom(show)
+    if (!show) {
+      this.saveWidgetStackOrder()
+      this.props.saveSetAllStackWidgets(false)
+      return
+    }
+
+    const { savedWidgetStackOrder } = this.props.newTabData
+
+    // When turning back on, all widgets should be set to shown in two cases:
+    // 1. When there is no cached widget display state
+    // 2. When all widgets were previous hidden
+    const turnAllOn = (
+      !Object.keys(savedWidgetStackOrder).length ||
+      Object.values(savedWidgetStackOrder).every(entry => !entry)
+    )
+
+    if (turnAllOn) {
+      this.props.saveSetAllStackWidgets(true)
+      return
+    }
+
+    this.props.saveShowTogether(savedWidgetStackOrder['together'])
+    this.props.saveShowRewards(savedWidgetStackOrder['rewards'])
+    this.props.saveShowBinance(savedWidgetStackOrder['binance'])
+    this.props.saveShowGemini(savedWidgetStackOrder['gemini'])
+    this.props.saveShowCryptoDotCom(savedWidgetStackOrder['cryptoDotCom'])
+    this.props.saveShowBitcoinDotCom(savedWidgetStackOrder['bitcoinDotCom'])
+  }
+
+  saveWidgetStackOrder = () => {
+    const {
+      showRewards,
+      showBinance,
+      showGemini,
+      showBitcoinDotCom,
+      showCryptoDotCom,
+      showTogether
+    } = this.props.newTabData
+    this.props.actions.saveWidgetStackOrder({
+      'rewards': showRewards,
+      'binance': showBinance,
+      'gemini': showGemini,
+      'bitcoinDotCom': showBitcoinDotCom,
+      'cryptoDotCom': showCryptoDotCom,
+      'together': showTogether
+    } as NewTab.StackWidgetCache)
   }
 
   renderCryptoContent () {

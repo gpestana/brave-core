@@ -61,6 +61,8 @@ declare namespace NewTab {
 
   export type StackWidget = 'rewards' | 'binance' | 'together' | 'gemini' | 'bitcoinDotCom' | 'cryptoDotCom' | ''
 
+  export type StackWidgetCache = Record<StackWidget, boolean>
+
   export interface GridSitesState {
     removedSites: Site[]
     gridSites: Site[]
@@ -86,6 +88,7 @@ declare namespace NewTab {
     currentStackWidget: StackWidget
     removedStackWidgets: StackWidget[]
     widgetStackOrder: StackWidget[]
+    savedWidgetStackOrder: StackWidgetCache
     binanceState: BinanceWidgetState
     geminiState: GeminiWidgetState
     cryptoDotComState: CryptoDotComWidgetState

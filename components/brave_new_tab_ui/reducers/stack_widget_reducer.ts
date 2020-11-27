@@ -74,6 +74,12 @@ const stackWidgetReducer: Reducer<NewTab.State | undefined> = (state: NewTab.Sta
     case types.SET_FOREGROUND_STACK_WIDGET:
       state = setForegroundStackWidget(payload.widget as NewTab.StackWidget, state)
       break
+    case types.SAVE_WIDGET_STACK_ORDER:
+      state = {
+        ...state,
+        savedWidgetStackOrder: payload.order as NewTab.StackWidgetCache
+      }
+      break
 
     default:
       break
