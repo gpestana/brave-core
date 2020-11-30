@@ -46,7 +46,7 @@ const struct {
 
 void ContentSettingsRegistry::RegisterBraveContentSettingsTypes(
     const ContentSettingsType& type, const std::string& name) {
-  Register(type, name, CONTENT_SETTING_ALLOW,
+  Register(type, name, CONTENT_SETTING_BLOCK,
            WebsiteSettingsInfo::UNSYNCABLE, AllowlistedSchemes(),
            ValidSettings(CONTENT_SETTING_ALLOW, CONTENT_SETTING_BLOCK,
                          CONTENT_SETTING_ASK,
