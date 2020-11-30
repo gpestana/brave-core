@@ -28,6 +28,7 @@
 #include "bat/ads/internal/p2a/p2a_util.h"
 #include "bat/ads/internal/platform/platform_helper.h"
 #include "bat/ads/internal/time_formatting_util.h"
+#include "bat/ads/internal/wip/ad_serving/ad_targeting/models/text_classification_model.h"
 #include "bat/ads/pref_names.h"
 
 namespace ads {
@@ -190,7 +191,7 @@ void AdServing::MaybeServeAdForParentCategories(
     const AdEventList& ad_events,
     MaybeServeAdForCategoriesCallback callback) {
   const CategoryList parent_categories =
-      ad_targeting::GetParentCategories(categories);
+      ad_targeting::GetParentSegments(categories);
 
   BLOG(1, "Serve ad for parent categories:");
   for (const auto& parent_category : parent_categories) {
@@ -224,7 +225,7 @@ void AdServing::MaybeServeAdForUntargeted(
   BLOG(1, "Serve untargeted ad");
 
   const std::vector<std::string> categories = {
-    ad_targeting::contextual::kUntargeted
+    ad_targeting::model::kUntargeted
   };
 
   database::table::CreativeAdNotifications database_table;

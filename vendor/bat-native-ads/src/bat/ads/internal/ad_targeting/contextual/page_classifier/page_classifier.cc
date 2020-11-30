@@ -233,14 +233,14 @@ bool PageClassifier::ShouldFilterCategory(
   // determine whether or not to filter the category
 
   const std::vector<std::string> category_classifications =
-      SplitCategory(category);
+      SplitSegment(category);
 
   const FilteredCategoryList filtered_categories =
       Client::Get()->get_filtered_categories();
 
   for (const auto& filtered_category : filtered_categories) {
     const std::vector<std::string> filtered_category_classifications =
-        SplitCategory(filtered_category.name);
+        SplitSegment(filtered_category.name);
 
     if (category_classifications.size() > 1 &&
         filtered_category_classifications.size() == 1) {

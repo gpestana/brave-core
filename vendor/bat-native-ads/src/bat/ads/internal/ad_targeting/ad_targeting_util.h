@@ -10,15 +10,16 @@
 #include <vector>
 
 #include "bat/ads/internal/ad_targeting/ad_targeting.h"
+#include "bat/ads/internal/wip/ad_serving/ad_targeting/models/text_classification_model.h"
 
 namespace ads {
 namespace ad_targeting {
 
-std::vector<std::string> SplitCategory(
-    const std::string& category);
+std::vector<std::string> SplitSegment(
+    const std::string& segment);
 
-CategoryList GetParentCategories(
-    const CategoryList& categories);
+SegmentList GetParentSegments(
+    const SegmentList& segments);
 
 }  // namespace ad_targeting
 }  // namespace ads

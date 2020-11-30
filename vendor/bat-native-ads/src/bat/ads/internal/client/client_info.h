@@ -14,7 +14,7 @@
 
 #include "bat/ads/ad_history_info.h"
 #include "bat/ads/internal/ad_targeting/behavioral/purchase_intent_classifier/purchase_intent_signal_history_info.h"
-#include "bat/ads/internal/ad_targeting/contextual/page_classifier/page_classifier.h"
+#include "bat/ads/internal/wip/ad_serving/ad_targeting/models/text_classification_model.h"
 #include "bat/ads/internal/client/preferences/ad_preferences_info.h"
 #include "bat/ads/result.h"
 
@@ -37,7 +37,8 @@ struct ClientInfo {
   std::map<std::string, uint64_t> seen_ad_notifications;
   std::map<std::string, uint64_t> seen_advertisers;
   uint64_t next_ad_serving_interval_timestamp_ = 0;
-  ad_targeting::contextual::PageProbabilitiesList page_probabilities_history;
+  ad_targeting::model::TextClassificationProbabilitiesList
+      text_classification_probabilities;
   std::string version_code;
   PurchaseIntentSignalSegmentHistoryMap purchase_intent_signal_history;
 };

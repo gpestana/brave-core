@@ -32,9 +32,13 @@ class AdServing;
 
 namespace ad_targeting {
 
-namespace contextual {
-class PageClassifier;
-}  // namespace contextual
+namespace resource {
+class TextClassification;
+}  // namespace resource
+
+namespace processor {
+class TextClassification;
+}  // namespace processor
 
 namespace behavioral {
 class PurchaseIntentClassifier;
@@ -196,7 +200,10 @@ class AdsImpl
   std::unique_ptr<privacy::TokenGenerator> token_generator_;
   std::unique_ptr<Confirmations> confirmations_;
   std::unique_ptr<Account> account_;
-  std::unique_ptr<ad_targeting::contextual::PageClassifier> page_classifier_;
+  std::unique_ptr<ad_targeting::resource::TextClassification>
+      text_classification_resource_;
+  std::unique_ptr<ad_targeting::processor::TextClassification>
+      text_classification_processor_;
   std::unique_ptr<ad_targeting::behavioral::PurchaseIntentClassifier>
       purchase_intent_classifier_;
   std::unique_ptr<ad_targeting::geographic::SubdivisionTargeting>

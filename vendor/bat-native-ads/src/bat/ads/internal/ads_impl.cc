@@ -20,8 +20,7 @@
 #include "bat/ads/internal/ad_targeting/ad_targeting.h"
 #include "bat/ads/internal/ad_targeting/behavioral/purchase_intent_classifier/purchase_intent_classifier.h"
 #include "bat/ads/internal/ad_targeting/behavioral/purchase_intent_classifier/purchase_intent_classifier_user_models.h"
-#include "bat/ads/internal/ad_targeting/contextual/page_classifier/page_classifier.h"
-#include "bat/ads/internal/ad_targeting/contextual/page_classifier/page_classifier_user_models.h"
+#include "bat/ads/internal/ad_targeting/contextual/contextual_util.h"
 #include "bat/ads/internal/ad_targeting/geographic/subdivision/subdivision_targeting.h"
 #include "bat/ads/internal/ad_transfer/ad_transfer.h"
 #include "bat/ads/internal/ads/ad_notifications/ad_notification.h"
@@ -45,6 +44,9 @@
 #include "bat/ads/internal/tab_manager/tab_info.h"
 #include "bat/ads/internal/tab_manager/tab_manager.h"
 #include "bat/ads/internal/user_activity/user_activity.h"
+#include "bat/ads/internal/wip/ad_targeting/processors/text_classification_processor.h"
+#include "bat/ads/internal/wip/ad_targeting/resources/text_classification/text_classification_resource.h"
+#include "bat/ads/internal/wip/ad_targeting/resources/text_classification/text_classification_resources.h"
 #include "bat/ads/new_tab_page_ad_info.h"
 #include "bat/ads/pref_names.h"
 #include "bat/ads/statement_info.h"
@@ -121,7 +123,7 @@ void AdsImpl::Shutdown(
 void AdsImpl::ChangeLocale(
     const std::string& locale) {
   subdivision_targeting_->MaybeFetchForLocale(locale);
-  page_classifier_->LoadUserModelForLocale(locale);
+  text_classification_resource_->LoadForLocale(locale);
   purchase_intent_classifier_->LoadUserModelForLocale(locale);
 }
 
@@ -156,7 +158,10 @@ void AdsImpl::OnPageLoaded(
   purchase_intent_classifier_->MaybeExtractIntentSignal(url,
       last_visible_tab_url);
 
-  page_classifier_->MaybeClassifyPage(url, content);
+
+  const std::string stripped_text =
+      ad_targeting::contextual::StripHtmlTagsAndNonAlphaCharacters(content);
+  text_classification_processor_->Process(stripped_text);
 }
 
 void AdsImpl::OnIdle() {
@@ -229,9 +234,9 @@ void AdsImpl::OnWalletUpdated(
 
 void AdsImpl::OnUserModelUpdated(
     const std::string& id) {
-  if (kPageClassificationUserModelIds.find(id) !=
-      kPageClassificationUserModelIds.end()) {
-    page_classifier_->LoadUserModelForId(id);
+  if (ad_targeting::resource::kTextClassificationIds.find(id) !=
+      ad_targeting::resource::kTextClassificationIds.end()) {
+    text_classification_resource_->LoadForId(id);
   } else if (kPurchaseIntentUserModelIds.find(id) !=
       kPurchaseIntentUserModelIds.end()) {
     purchase_intent_classifier_->LoadUserModelForId(id);
@@ -372,13 +377,17 @@ void AdsImpl::set(
       token_generator_.get());
   account_->AddObserver(this);
 
-  page_classifier_ =
-      std::make_unique<ad_targeting::contextual::PageClassifier>();
+  text_classification_resource_ =
+      std::make_unique<ad_targeting::resource::TextClassification>();
+  text_classification_processor_ =
+      std::make_unique<ad_targeting::processor::TextClassification>(
+          text_classification_resource_->Get());
+
   purchase_intent_classifier_ =
       std::make_unique<ad_targeting::behavioral::PurchaseIntentClassifier>();
   subdivision_targeting_ =
       std::make_unique<ad_targeting::geographic::SubdivisionTargeting>();
-  ad_targeting_ = std::make_unique<AdTargeting>(page_classifier_.get(),
+  ad_targeting_ = std::make_unique<AdTargeting>(
       purchase_intent_classifier_.get());
 
   ad_notification_serving_ = std::make_unique<ad_notifications::AdServing>(
