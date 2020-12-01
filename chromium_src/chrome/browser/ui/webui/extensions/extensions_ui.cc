@@ -33,6 +33,8 @@ void BraveAddExtensionsResources(content::WebUIDataSource* source) {
   }
 #endif
   NavigationBarDataProvider::Initialize(source);
+  source->AddLocalizedString("itemAllowInTor",
+                             IDS_EXTENSIONS_BRAVE_ITEM_ALLOW_TOR);
 }
 
 }  // namespace

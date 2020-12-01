@@ -1,0 +1,23 @@
+diff --git a/chrome/browser/resources/extensions/detail_view.html b/chrome/browser/resources/extensions/detail_view.html
+index fc42d3289b47800da6e3884d6382c949e80f3ead..9e19a166a188f07cb73a214b223c480ecadc4aa4 100644
+--- a/chrome/browser/resources/extensions/detail_view.html
++++ b/chrome/browser/resources/extensions/detail_view.html
+@@ -351,6 +351,18 @@
+               <div class="section-content">$i18n{incognitoInfoWarning}</div>
+             </div>
+           </extensions-toggle-row>
++        <template is="dom-if"
++          if="[[shouldShowTorOption_(
++              data.incognitoAccess.isActive)]]">
++          <extensions-toggle-row id="allow-tor"
++              checked="[[data.torAccess.isActive]]"
++              class="hr"
++              on-change="onAllowTorChange_">
++            <div>
++              <div>$i18n{itemAllowInTor}</div>
++              <div class="section-content">$i18n{incognitoInfoWarning}</div>
++            </div>
++          </extensions-toggle-row>
+         </template>
+         <template is="dom-if" if="[[data.fileAccess.isEnabled]]">
+           <extensions-toggle-row id="allow-on-file-urls"

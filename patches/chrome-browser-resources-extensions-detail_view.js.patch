@@ -1,0 +1,26 @@
+diff --git a/chrome/browser/resources/extensions/detail_view.js b/chrome/browser/resources/extensions/detail_view.js
+index 36602faefa99c089f1c34a1eb5ff178e55524b5c..eb72fa27710d0d57f1a4fd0de6618e52f2cbbcf7 100644
+--- a/chrome/browser/resources/extensions/detail_view.js
++++ b/chrome/browser/resources/extensions/detail_view.js
+@@ -216,6 +216,9 @@ Polymer({
+   shouldShowIncognitoOption_() {
+     return this.data.incognitoAccess.isEnabled && this.incognitoAvailable;
+   },
++  shouldShowTorOption_() {
++    return this.data.incognitoAccess.isActive;
++  },
+ 
+   /** @private */
+   onEnableToggleChange_() {
+@@ -263,6 +266,11 @@ Polymer({
+     this.delegate.setItemAllowedIncognito(
+         this.data.id, this.$$('#allow-incognito').checked);
+   },
++  /** @private */
++  onAllowTorChange_() {
++    this.delegate.setItemAllowedTor(
++        this.data.id, this.$$('#allow-tor').checked);
++  },
+ 
+   /** @private */
+   onAllowOnFileUrlsChange_() {
