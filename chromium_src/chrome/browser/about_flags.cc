@@ -13,6 +13,7 @@
 #include "brave/components/brave_sync/buildflags/buildflags.h"
 #include "brave/components/ipfs/buildflags/buildflags.h"
 #include "brave/components/ntp_background_images/browser/features.h"
+#include "brave/components/sidebar/buildflags/buildflags.h"
 #include "brave/components/speedreader/buildflags.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_manager.h"
@@ -24,6 +25,17 @@ using ntp_background_images::features::kBraveNTPBrandedWallpaper;
 using ntp_background_images::features::kBraveNTPBrandedWallpaperDemo;
 using ntp_background_images::features::kBraveNTPSuperReferralWallpaper;
 
+#if BUILDFLAG(ENABLE_SIDEBAR)
+#include "brave/components/sidebar/features.h"
+
+#define SIDEBAR_FEATURE_ENTRIES \
+    {"sidebar",                                                            \
+     flag_descriptions::kBraveSidebarName,                                 \
+     flag_descriptions::kBraveSidebarDescription, kOsDesktop,              \
+     FEATURE_VALUE_TYPE(sidebar::kSidebarFeature)},
+#else
+#define SIDEBAR_FEATURE_ENTRIES
+#endif
 
 #if BUILDFLAG(ENABLE_SPEEDREADER)
 #include "brave/components/speedreader/features.h"
@@ -81,6 +93,7 @@ using ntp_background_images::features::kBraveNTPSuperReferralWallpaper;
     SPEEDREADER_FEATURE_ENTRIES                                            \
     BRAVE_SYNC_FEATURE_ENTRIES                                             \
     BRAVE_IPFS_FEATURE_ENTRIES                                             \
+    SIDEBAR_FEATURE_ENTRIES                                                \
     {"brave-super-referral",                                               \
      flag_descriptions::kBraveSuperReferralName,                           \
      flag_descriptions::kBraveSuperReferralDescription,                    \
